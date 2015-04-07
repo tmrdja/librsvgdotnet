@@ -23,8 +23,8 @@
         {
             if (!_initialized)
             {
-                g_type_init();
-                rsvg_init();
+                NativeMethods.g_type_init();
+                NativeMethods.rsvg_init();
                 _initialized = true;
             }
 
@@ -40,7 +40,7 @@
         /// <returns>A new Bitmap containing the SVG image</returns>
         public Bitmap Image(int w, int h, bool stretch)
         {
-            RsvgDimensionData dim = new RsvgDimensionData();
+            NativeMethods.RsvgDimensionData dim = new NativeMethods.RsvgDimensionData();
 
             int dw = 0;
             int dh = 0;
@@ -50,7 +50,7 @@
                 return null;
             }
 
-            rsvg_handle_get_dimensions(_rsvgHandle, ref dim);
+            NativeMethods.rsvg_handle_get_dimensions(_rsvgHandle, ref dim);
 
             double scaleX = w / ((double)dim.width);
             double scaleY = h / ((double)dim.height);
@@ -72,26 +72,26 @@
             }
 
             //// Initialize the gdk_pixbuf
-            IntPtr pixbuf = gdk_pixbuf_new(ColorSpace.Rgb, true, 8, dw, dh);
-            int stride = gdk_pixbuf_get_rowstride(pixbuf);
+            IntPtr pixbuf = NativeMethods.gdk_pixbuf_new(NativeMethods.ColorSpace.Rgb, true, 8, dw, dh);
+            int stride = NativeMethods.gdk_pixbuf_get_rowstride(pixbuf);
             int width = dw;
             int height = dh;
 
-            IntPtr pixels = gdk_pixbuf_get_pixels(pixbuf);
+            IntPtr pixels = NativeMethods.gdk_pixbuf_get_pixels(pixbuf);
             byte[] src = new byte[stride * height];
             Marshal.Copy(src, 0, pixels, src.Length);
 
             //// Create the cairo surface
-            IntPtr surface = cairo_image_surface_create_for_data(gdk_pixbuf_get_pixels(pixbuf), 0, width, height, stride);
-            IntPtr cairo = cairo_create(surface);
+            IntPtr surface = NativeMethods.cairo_image_surface_create_for_data(NativeMethods.gdk_pixbuf_get_pixels(pixbuf), 0, width, height, stride);
+            IntPtr cairo = NativeMethods.cairo_create(surface);
 
             //// Set the scale and render the image
-            cairo_scale(cairo, scaleX, scaleY);
-            rsvg_handle_render_cairo(_rsvgHandle, cairo);
+            NativeMethods.cairo_scale(cairo, scaleX, scaleY);
+            NativeMethods.rsvg_handle_render_cairo(_rsvgHandle, cairo);
 
             //// Destroy the cairo surface
-            cairo_destroy(cairo);
-            cairo_surface_destroy(surface);
+            NativeMethods.cairo_destroy(cairo);
+            NativeMethods.cairo_surface_destroy(surface);
 
             //// Copy the gdk_pixbuf into a bitmap
             Bitmap bitmap = new Bitmap(width, height);
@@ -114,7 +114,7 @@
             bitmap.UnlockBits(bd);
 
             //// Release the gdk_pixbuf
-            g_object_unref(pixbuf);
+            NativeMethods.g_object_unref(pixbuf);
 
             return bitmap;
         }
@@ -128,7 +128,7 @@
 
             try
             {
-                handle = rsvg_handle_new_from_data(data, data.Length - 1, out error);
+                handle = NativeMethods.rsvg_handle_new_from_data(data, data.Length - 1, out error);
             }
             catch (Exception e)
             {
@@ -139,7 +139,7 @@
             {
                 if (error != IntPtr.Zero)
                 {
-                    GError errorstruct = (GError)Marshal.PtrToStructure(error, typeof(GError));
+                    NativeMethods.GError errorstruct = (NativeMethods.GError)Marshal.PtrToStructure(error, typeof(NativeMethods.GError));
                     throw new Exception(errorstruct.message);
                 }
                 throw new Exception();
@@ -157,68 +157,13 @@
         {
             if (_rsvgHandle != IntPtr.Zero)
             {
-                rsvg_handle_free(_rsvgHandle);
+                NativeMethods.rsvg_handle_free(_rsvgHandle);
             }
             _rsvgHandle = IntPtr.Zero;
         }
 
-        #region P/Invoke
 
-        private enum ColorSpace { Rgb };
-
-        [StructLayout(LayoutKind.Sequential)]
-        struct RsvgDimensionData
-        {
-            public int width;
-            public int height;
-            public double em;
-            public double ex;
-        }
-
-        [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi)]
-        struct GError
-        {
-            int domain;
-            int code;
-            public string message;
-        }
-
-        [DllImport("librsvg-2-2.dll", CallingConvention = CallingConvention.Cdecl)]
-        static extern void rsvg_init();
-        [DllImport("librsvg-2-2.dll", CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-        static extern IntPtr rsvg_handle_new_from_data([MarshalAs(UnmanagedType.LPStr)]string data, int data_len, out IntPtr error);
-        [DllImport("librsvg-2-2.dll", CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-        static extern IntPtr rsvg_handle_new_from_file([MarshalAs(UnmanagedType.LPStr)]string file_name, out IntPtr error);
-        [DllImport("librsvg-2-2.dll", CallingConvention = CallingConvention.Cdecl)]
-        static extern void rsvg_handle_free(IntPtr handle);
-        [DllImport("librsvg-2-2.dll", CallingConvention = CallingConvention.Cdecl)]
-        static extern bool rsvg_handle_render_cairo(IntPtr handle, IntPtr cairo);
-        [DllImport("librsvg-2-2.dll", CallingConvention = CallingConvention.Cdecl)]
-        static extern void rsvg_handle_get_dimensions(IntPtr handle, ref RsvgDimensionData dimension_data);
-
-        [DllImport("libcairo-2.dll", CallingConvention = CallingConvention.Cdecl)]
-        static extern IntPtr cairo_create(IntPtr target);
-        [DllImport("libcairo-2.dll", CallingConvention = CallingConvention.Cdecl)]
-        static extern void cairo_destroy(IntPtr cairo);
-        [DllImport("libcairo-2.dll", CallingConvention = CallingConvention.Cdecl)]
-        static extern void cairo_surface_destroy(IntPtr cairo);
-        [DllImport("libcairo-2.dll", CallingConvention = CallingConvention.Cdecl)]
-        static extern void cairo_scale(IntPtr cairo, double w, double h);
-        [DllImport("libcairo-2.dll", CallingConvention = CallingConvention.Cdecl)]
-        static extern IntPtr cairo_image_surface_create_for_data(IntPtr data, int format, int width, int height, int stride);
-
-        [DllImport("libgobject-2.0-0.dll", CallingConvention = CallingConvention.Cdecl)]
-        static extern void g_type_init();
-        [DllImport("libgobject-2.0-0.dll", CallingConvention = CallingConvention.Cdecl)]
-        static extern void g_object_unref(IntPtr obj);
-
-        [DllImport("libgdk_pixbuf-2.0-0.dll", CallingConvention = CallingConvention.Cdecl)]
-        static extern IntPtr gdk_pixbuf_get_pixels(IntPtr pixbuf);
-        [DllImport("libgdk_pixbuf-2.0-0.dll", CallingConvention = CallingConvention.Cdecl)]
-        static extern int gdk_pixbuf_get_rowstride(IntPtr pixbuf);
-        [DllImport("libgdk_pixbuf-2.0-0.dll", CallingConvention = CallingConvention.Cdecl)]
-        static extern IntPtr gdk_pixbuf_new(ColorSpace colorspace, bool has_alpha, int bits_per_sample, int width, int height);
-
-        #endregion
     }
+
+
 }
