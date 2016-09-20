@@ -152,7 +152,12 @@
             }
         }
 
-        public void ExportToPdf(String filename)
+        /// <summary>
+        /// Save to PDF
+        /// </summary>
+        /// <param name="filename">Path to file to save</param>
+
+        public void SaveToPdf(String filename)
         {
             //rsvg_set_default_dpi(300);
             NativeMethods.RsvgDimensionData dim = new NativeMethods.RsvgDimensionData();
@@ -185,11 +190,11 @@
             return 0;
         }
         /// <summary>
-        /// 
+        /// Save to PDF
         /// </summary>
-        /// <param name="stream"></param>
+        /// <param name="stream">Strema to write to</param>
 
-        public void ExportToPdf(Stream stream)
+        public void SaveToPdf(Stream stream)
         {
             NativeMethods.RsvgDimensionData dim = new NativeMethods.RsvgDimensionData();
 
