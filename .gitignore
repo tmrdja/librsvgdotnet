@@ -6,3 +6,7 @@ obj/Debug/DesignTimeResolveAssemblyReferencesInput.cache
 obj/Release/DesignTimeResolveAssemblyReferencesInput.cache
 
 obj/Release/librsvgdotnet.csproj.FileListAbsolute.txt
+
+test/bin
+
+test/obj

@@ -8,10 +8,10 @@ namespace librsvgdotnet
     class NativeMethods
     {
 
-        const string libRSVG = "librsvg-2-2.dll";
-        const string libCairo = "libcairo-2.dll";
-        const string libgObject = "libgobject-2.0-0.dll";
-        const string libGdkPixBuf = "libgdk_pixbuf-2.0-0.dll";
+        const string libRSVG = "librsvgdotnet\\librsvg-2-2.dll";
+        const string libCairo = "librsvgdotnet\\libcairo-2.dll";
+        const string libgObject = "librsvgdotnet\\libgobject-2.0-0.dll";
+        const string libGdkPixBuf = "librsvgdotnet\\libgdk_pixbuf-2.0-0.dll";
 
 
         internal enum ColorSpace { Rgb };
@@ -53,6 +53,9 @@ namespace librsvgdotnet
         [DllImport(libRSVG, CallingConvention = CallingConvention.Cdecl)]
         internal static extern void rsvg_handle_get_dimensions(IntPtr handle, ref RsvgDimensionData dimension_data);
 
+        [DllImport(libRSVG, CallingConvention = CallingConvention.Cdecl)]
+        internal static extern void rsvg_set_default_dpi(double dpi);
+
         [DllImport(libCairo, CallingConvention = CallingConvention.Cdecl)]
         internal static extern IntPtr cairo_create(IntPtr target);
         
@@ -67,6 +70,18 @@ namespace librsvgdotnet
         
         [DllImport(libCairo, CallingConvention = CallingConvention.Cdecl)]
         internal static extern IntPtr cairo_image_surface_create_for_data(IntPtr data, int format, int width, int height, int stride);
+
+        [DllImport(libCairo, CallingConvention = CallingConvention.Cdecl)]
+        internal static extern IntPtr cairo_pdf_surface_create([MarshalAs(UnmanagedType.LPStr)]string filename, double width_in_points, double height_in_points);
+
+        [DllImport(libCairo, CallingConvention = CallingConvention.Cdecl)]
+        internal static extern int cairo_status(IntPtr cairo);
+
+        [DllImport(libCairo, CallingConvention = CallingConvention.Cdecl)]
+        internal static extern IntPtr cairo_status_to_string(int status);
+
+        [DllImport(libCairo, CallingConvention = CallingConvention.Cdecl)]
+        internal static extern IntPtr cairo_pdf_surface_create_for_stream([MarshalAs(UnmanagedType.FunctionPtr)]CairoWriteFunction write_func, IntPtr closure, double width_in_points, double height_in_points);
 
         [DllImport(libgObject, CallingConvention = CallingConvention.Cdecl)]
         internal static extern void g_type_init();

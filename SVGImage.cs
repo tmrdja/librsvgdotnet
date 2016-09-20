@@ -3,10 +3,12 @@
     using System;
     using System.Drawing;
     using System.Drawing.Imaging;
+    using System.IO;
     using System.Runtime.ExceptionServices;
     using System.Runtime.InteropServices;
     using System.Security;
 
+    public delegate int CairoWriteFunction(IntPtr closure, IntPtr data, int length);
     /// <summary>
     /// The SVGImage class allows a C# Bitmap to be rendered from a string containing SVG data
     /// </summary>
@@ -14,7 +16,7 @@
     {
         private IntPtr _rsvgHandle = IntPtr.Zero;
         private static bool _initialized = false;
-        
+
         /// <summary>
         /// Create a new SVGImage instance using a string containing SVG data
         /// </summary>
@@ -148,6 +150,68 @@
             {
                 _rsvgHandle = handle;
             }
+        }
+
+        public void ExportToPdf(String filename)
+        {
+            //rsvg_set_default_dpi(300);
+            NativeMethods.RsvgDimensionData dim = new NativeMethods.RsvgDimensionData();
+
+            NativeMethods.rsvg_handle_get_dimensions(_rsvgHandle, ref dim);
+
+            IntPtr surface = NativeMethods.cairo_pdf_surface_create(filename, dim.width, dim.height);
+            IntPtr cairo = NativeMethods.cairo_create(surface);
+            NativeMethods.rsvg_handle_render_cairo(_rsvgHandle, cairo);
+
+            int status = NativeMethods.cairo_status(cairo);
+            if (status > 0)
+            {
+                IntPtr s = NativeMethods.cairo_status_to_string(status);
+                string ret = Marshal.PtrToStringAnsi(s);
+                throw new Exception(ret);
+            }
+
+            NativeMethods.cairo_destroy(cairo);
+            NativeMethods.cairo_surface_destroy(surface);
+        }
+
+        private int WriteToPDF(IntPtr closure, IntPtr data, int length)
+        {
+            GCHandle handle2 = (GCHandle)closure;
+            Stream s = (handle2.Target as Stream);
+            byte[] b = new byte[length];
+            Marshal.Copy(data, b, 0, length);
+            s.Write(b, 0, length);
+            return 0;
+        }
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="stream"></param>
+
+        public void ExportToPdf(Stream stream)
+        {
+            NativeMethods.RsvgDimensionData dim = new NativeMethods.RsvgDimensionData();
+
+            NativeMethods.rsvg_handle_get_dimensions(_rsvgHandle, ref dim);
+
+            CairoWriteFunction cwf = new CairoWriteFunction(WriteToPDF);
+            GCHandle handle1 = GCHandle.Alloc(stream);
+            IntPtr parameter = (IntPtr)handle1;
+            IntPtr surface = NativeMethods.cairo_pdf_surface_create_for_stream(cwf, parameter, dim.width, dim.height);
+            IntPtr cairo = NativeMethods.cairo_create(surface);
+            NativeMethods.rsvg_handle_render_cairo(_rsvgHandle, cairo);
+
+            int status = NativeMethods.cairo_status(cairo);
+            if (status > 0)
+            {
+                IntPtr s = NativeMethods.cairo_status_to_string(status);
+                string ret = Marshal.PtrToStringAnsi(s);
+                throw new Exception(ret);
+            }
+
+            NativeMethods.cairo_destroy(cairo);
+            NativeMethods.cairo_surface_destroy(surface);
         }
 
         /// <summary>
