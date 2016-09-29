@@ -56,6 +56,9 @@ namespace librsvgdotnet
         [DllImport(libRSVG, CallingConvention = CallingConvention.Cdecl)]
         internal static extern void rsvg_set_default_dpi(double dpi);
 
+        [DllImport(libRSVG, CallingConvention = CallingConvention.Cdecl)]
+        internal static extern void rsvg_handle_set_dpi(IntPtr handle, double dpi);
+
         [DllImport(libCairo, CallingConvention = CallingConvention.Cdecl)]
         internal static extern IntPtr cairo_create(IntPtr target);
         

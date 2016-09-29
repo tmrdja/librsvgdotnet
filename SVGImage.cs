@@ -33,46 +33,16 @@
             ReadFile(data);
         }
 
-        /// <summary>
-        /// Creates a C# Bitmap from the SVGImage
-        /// </summary>
-        /// <param name="w">The desired width</param>
-        /// <param name="h">The desired height</param>
-        /// <param name="stretch">If true, stretch the SVG image to fit the width and height exactly</param>
-        /// <returns>A new Bitmap containing the SVG image</returns>
-        public Bitmap Image(int w, int h, bool stretch)
+        NativeMethods.RsvgDimensionData GetDimensions()
         {
             NativeMethods.RsvgDimensionData dim = new NativeMethods.RsvgDimensionData();
-
-            int dw = 0;
-            int dh = 0;
-
-            if (_rsvgHandle == IntPtr.Zero)
-            {
-                return null;
-            }
-
             NativeMethods.rsvg_handle_get_dimensions(_rsvgHandle, ref dim);
+            return dim;
+        }
 
-            double scaleX = w / ((double)dim.width);
-            double scaleY = h / ((double)dim.height);
-
-            if (stretch)
-            {
-                dw = w;
-                dh = h;
-            }
-            else
-            {
-                double fixedScale = (scaleX < scaleY ? scaleX : scaleY);
-                double fixedWidth = dim.width * fixedScale;
-                double fixedHeight = dim.height * fixedScale;
-                scaleX = fixedScale;
-                scaleY = fixedScale;
-                dw = (int)fixedWidth;
-                dh = (int)fixedHeight;
-            }
-
+        private Bitmap Image(int dw, int dh, double scaleX, double scaleY)
+        {
+            NativeMethods.rsvg_handle_set_dpi(_rsvgHandle, 10);
             //// Initialize the gdk_pixbuf
             IntPtr pixbuf = NativeMethods.gdk_pixbuf_new(NativeMethods.ColorSpace.Rgb, true, 8, dw, dh);
             int stride = NativeMethods.gdk_pixbuf_get_rowstride(pixbuf);
@@ -121,6 +91,58 @@
             return bitmap;
         }
 
+
+        /// <summary>
+        /// Creates a C# Bitmap from the SVGImage
+        /// </summary>
+        /// <param name="w">The desired width</param>
+        /// <param name="h">The desired height</param>
+        /// <param name="stretch">If true, stretch the SVG image to fit the width and height exactly</param>
+        /// <returns>A new Bitmap containing the SVG image</returns>
+        public Bitmap Image(int w, int h, bool stretch)
+        {
+            int dw = 0;
+            int dh = 0;
+
+            if (_rsvgHandle == IntPtr.Zero)
+            {
+                return null;
+            }
+            NativeMethods.RsvgDimensionData dim = GetDimensions();
+
+            double scaleX = w / ((double)dim.width);
+            double scaleY = h / ((double)dim.height);
+
+            if (stretch)
+            {
+                dw = w;
+                dh = h;
+            }
+            else
+            {
+                double fixedScale = (scaleX < scaleY ? scaleX : scaleY);
+                double fixedWidth = dim.width * fixedScale;
+                double fixedHeight = dim.height * fixedScale;
+                scaleX = fixedScale;
+                scaleY = fixedScale;
+                dw = (int)fixedWidth;
+                dh = (int)fixedHeight;
+            }
+            return Image(dw, dh, scaleX, scaleY);
+        }
+
+        public Bitmap Image(double dpi)
+        {
+            NativeMethods.RsvgDimensionData dim = GetDimensions();
+            return Image((int)dpi*dim.width, (int)dpi * dim.height, dpi, dpi);
+        }
+
+        public Bitmap Image(double dpiX, double dpiY)
+        {
+            NativeMethods.RsvgDimensionData dim = GetDimensions();
+            return Image(dim.width, dim.height, dpiX, dpiY);
+        }
+
         [HandleProcessCorruptedStateExceptions]
         [SecurityCritical]
         public void ReadFile(string data)
@@ -159,7 +181,6 @@
 
         public void SaveToPdf(String filename)
         {
-            //rsvg_set_default_dpi(300);
             NativeMethods.RsvgDimensionData dim = new NativeMethods.RsvgDimensionData();
 
             NativeMethods.rsvg_handle_get_dimensions(_rsvgHandle, ref dim);
@@ -217,6 +238,33 @@
 
             NativeMethods.cairo_destroy(cairo);
             NativeMethods.cairo_surface_destroy(surface);
+        }
+
+        public void SaveToPng(String file, int width, int height, bool stretch, Color? background = null)
+        {
+            SaveToPng(File.OpenRead(file), width, height, stretch, background);
+        }
+
+        public void SaveToPng(Stream stream, int width, int height, bool stretch, Color? background = null)
+        {
+            
+            Bitmap i = this.Image(3000, 3000, false);
+            if (background.HasValue && background.Value != Color.Transparent)
+            {
+                Bitmap target = new Bitmap(i.Size.Width, i.Size.Height);
+                Graphics g = Graphics.FromImage(target);
+                g.Clear(Color.White);
+                //g.DrawRectangle(new Pen(new SolidBrush(Color.White)), 0, 0, target.Width, target.Height);
+                g.DrawImage(i, 0, 0);
+                target.Save(stream, ImageFormat.Png);
+                target.Dispose();
+                g.Dispose();
+            }
+            else
+            {
+                i.Save(stream, ImageFormat.Png);
+            }
+            i.Dispose();
         }
 
         /// <summary>
