@@ -1,13 +1,9 @@
 ﻿using librsvgdotnet;
 using System;
-using System.Collections.Generic;
 using System.Drawing;
 using System.Drawing.Imaging;
 using System.IO;
-using System.Linq;
 using System.Text;
-using System.Text.RegularExpressions;
-using System.Threading.Tasks;
 
 namespace Test
 {
@@ -16,12 +12,14 @@ namespace Test
         static void Main(string[] args)
         {
             String file = "test.svg";
-            string text = File.ReadAllText(file, Encoding.GetEncoding("iso-8859-1"));
+            
+            //"iso-8859-1"
+            string text = File.ReadAllText(file, Encoding.GetEncoding("utf-8"));
             /*text = Regex.Replace(text, "(<!--(.*?)-->)|(ng-[a-zA-Z0-9-]+=\"[^\"]*\")", "");
             byte[] bytes = Encoding.Default.GetBytes(text);
             text = Encoding.UTF8.GetString(bytes);*/
             //File.WriteAllText("loadPodloga2.svg", text);
-            SVGImage image = new SVGImage(text + "\n");
+            SVGImage image = new SVGImage(Encoding.UTF8.GetBytes(text));
             FileStream sw = File.Create("svg.pdf");
             image.SaveToPdf(sw);
 

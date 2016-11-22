@@ -39,7 +39,7 @@ namespace librsvgdotnet
         internal static extern void rsvg_init();
         
         [DllImport(libRSVG, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-        internal static extern IntPtr rsvg_handle_new_from_data([MarshalAs(UnmanagedType.LPStr)]string data, int data_len, out IntPtr error);
+        internal static extern IntPtr rsvg_handle_new_from_data(byte[] data, int data_len, out IntPtr error);
         
         [DllImport(libRSVG, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
         internal static extern IntPtr rsvg_handle_new_from_file([MarshalAs(UnmanagedType.LPStr)]string file_name, out IntPtr error);
@@ -85,6 +85,9 @@ namespace librsvgdotnet
 
         [DllImport(libCairo, CallingConvention = CallingConvention.Cdecl)]
         internal static extern IntPtr cairo_pdf_surface_create_for_stream([MarshalAs(UnmanagedType.FunctionPtr)]CairoWriteFunction write_func, IntPtr closure, double width_in_points, double height_in_points);
+
+        [DllImport(libCairo, CallingConvention = CallingConvention.Cdecl)]
+        internal static extern void cairo_select_font_face(IntPtr cairo, [MarshalAs(UnmanagedType.LPStr)]string family, int slant, int weight);
 
         [DllImport(libgObject, CallingConvention = CallingConvention.Cdecl)]
         internal static extern void g_type_init();

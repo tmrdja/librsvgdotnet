@@ -7,6 +7,7 @@
     using System.Runtime.ExceptionServices;
     using System.Runtime.InteropServices;
     using System.Security;
+    using System.Text;
 
     public delegate int CairoWriteFunction(IntPtr closure, IntPtr data, int length);
     /// <summary>
@@ -21,7 +22,16 @@
         /// Create a new SVGImage instance using a string containing SVG data
         /// </summary>
         /// <param name="data">The SVG data</param>
-        public SVGImage(string data)
+        public SVGImage(string data) : this(Encoding.UTF8.GetBytes(data))
+        {
+            
+        }
+
+        /// <summary>
+        /// Create a new SVGImage instance using a string containing SVG data
+        /// </summary>
+        /// <param name="data">The SVG data</param>
+        public SVGImage(byte[] data)
         {
             if (!_initialized)
             {
@@ -145,14 +155,14 @@
 
         [HandleProcessCorruptedStateExceptions]
         [SecurityCritical]
-        public void ReadFile(string data)
+        public void ReadFile(byte[] data)
         {
             IntPtr error = IntPtr.Zero;
             IntPtr handle = IntPtr.Zero;
 
             try
             {
-                handle = NativeMethods.rsvg_handle_new_from_data(data, data.Length - 1, out error);
+                handle = NativeMethods.rsvg_handle_new_from_data(data, data.Length, out error);
             }
             catch (Exception e)
             {
@@ -217,6 +227,7 @@
 
         public void SaveToPdf(Stream stream)
         {
+            //NativeMethods.cairo_select_font_face(_rsvgHandle, "serif", 0, 0);
             NativeMethods.RsvgDimensionData dim = new NativeMethods.RsvgDimensionData();
 
             NativeMethods.rsvg_handle_get_dimensions(_rsvgHandle, ref dim);
